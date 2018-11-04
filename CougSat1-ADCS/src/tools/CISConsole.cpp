@@ -8,9 +8,9 @@
  ******************************************************************************/
 /**
  * @file CISConsole.cpp
- * @author Bradley Davis
- * @date 6 Mar 2018
- * @brief Communicates between the IHU and the testing computer
+ * @author Cody Sigvartson
+ * @date 4 Nov 2018
+ * @brief Communicates between the ADCS and the testing computer
  *
  * For use during testing via the umbilical
  * SWO is for debug printing
@@ -18,7 +18,7 @@
  */
 
 #include "CISConsole.h"
-#include "IHUPins.h"
+#include "ADCSPins.h"
 
 SWO_Channel swo;
-Serial umbilical(UART0_TX, UART0_RX, 115200);
+

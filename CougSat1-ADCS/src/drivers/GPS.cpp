@@ -28,10 +28,6 @@ GPS::~GPS(){
 	// free up any dynamic memory allocation
 }
 
-GPS::bool getMode() const{
-	return this->mode;
-}
-
 uint32_t GPS::getUtcTime() const{
 	return this->utcTime;
 }
@@ -61,6 +57,8 @@ uint8_t GPS::read(){
 	// Read NMEA data from the GPS using mbed API
 	// ie. serial.read(uint8_t *buffer, int length, const event_callback_t &callback, int event=SERIAL_EVENT_RX_COMPLETE, unsigned char char_match=SERIAL_RESERVED_CHAR_MATCH)
 	// Parse data into usable format for subscribers of this data
+	
+	return ERROR_SUCCESS;
 }
 
 // Attribute:
@@ -75,7 +73,6 @@ uint8_t GPS::setUpdateRate(uint8_t frequency, Attributes_t attribute)
     messageBody[1] = attribute;
     return sendCommand(0x0E, messageBody, 2);
 }
-}
 
 uint8_t GPS::resetReceiver(bool reboot)
 {
@@ -86,7 +83,7 @@ uint8_t GPS::resetReceiver(bool reboot)
     uint8_t code = sendCommand(0x04, messageBody, 1, 10000);
     if (code == ERROR_SUCCESS)
     {
-        delay(500);
+        wait_ms(500);
 		// TODO: restart the gps
     }
 	else{
@@ -118,13 +115,13 @@ uint8_t GPS::configNMEA(uint8_t nmeaByte, Attributes_t attribute)
     uint8_t messageBody[8];
     memset(messageBody, 0, 8);
 	// determine which nmea sentences are enabled/disabled
-	messageBody[0] = (nmeaState >> NMEA_GGA) & 1;
-    messageBody[1] = (nmeaState >> NMEA_GSA) & 1;
-    messageBody[2] = (nmeaState >> NMEA_GSV) & 1;
-    messageBody[3] = (nmeaState >> NMEA_GLL) & 1;
-    messageBody[4] = (nmeaState >> NMEA_RMC) & 1;
-    messageBody[5] = (nmeaState >> NMEA_VTG) & 1;
-    messageBody[6] = (nmeaState >> NMEA_ZDA) & 1;
+	messageBody[0] = (nmeaState >> 0) & 1;
+    messageBody[1] = (nmeaState >> 1) & 1;
+    messageBody[2] = (nmeaState >> 2) & 1;
+    messageBody[3] = (nmeaState >> 3) & 1;
+    messageBody[4] = (nmeaState >> 4) & 1;
+    messageBody[5] = (nmeaState >> 5) & 1;
+    messageBody[6] = (nmeaState >> 6) & 1;
     messageBody[7] = attribute;
     return sendCommand(0x08, messageBody, 8);
 }
@@ -143,14 +140,11 @@ uint8_t GPS::configPowerSave(bool enable, Attributes_t attribute)
     return sendCommand(0x0C, messageBody, 2);
 }
 
-void GPS::setMode(bool nMode){
-	// this will ultimately call sendCommand() to wake/sleep the GPS
-}
-
 // TODO: implement
 uint8_t GPS::initialize(){
 	// This function should initialize the GPS into a "default" state
 	// Use the sendCommand() function to configure the GPS
+	return ERROR_SUCCESS;
 }
 
 // Private Utility Functions for parsing NMEA data
@@ -172,6 +166,7 @@ uint8_t GPS::rmcParser(uint8_t *nmea){
 	5. speed over ground
 	6. date
 	*/
+	return ERROR_SUCCESS;
 }
 
 uint8_t GPS::sendCommand(uint8_t messageId, uint8_t *messageBody, uint32_t bodyLen, uint32_t timeout)
@@ -208,32 +203,31 @@ uint8_t GPS::sendCommand(uint8_t messageId, uint8_t *messageBody, uint32_t bodyL
     printPacket(packet, packetLength);
 
     uint8_t code = sendPacket(packet, packetLength, timeout / 2);
-    DEBUG("GPS","response code ");
-    DEBUG("GPS",code);
 
     if (code != ERROR_SUCCESS)
     {
         DEBUG("GPS","failed, trying again\n");
         code = sendPacket(packet, packetLength, timeout / 2);
-        DEBUG("GPS","response code ");
-        DEBUG("GPS",code);
     }
     return code;
 }
 
-uint8_t GPS::sendPacket(uint8_t *packet, int32_t size, uint32_t timeout)
+uint8_t GPS::sendPacket(uint8_t *packet, uint32_t size, uint32_t timeout)
 {
     uint8_t c = 0;
     uint8_t last = 0;
     bool response = false;
-    serial.write(packet, size);
+	for(uint32_t i = 0; i < size; i++)
+		serial.putc(packet[i]);
     // TODO: wait for ACK, need to use different API to get current
 	// time in ms
-    for(uint32_t start = millis(); millis() - start < timeout;)
+	Timer t;
+	t.start();
+    for(uint32_t start = t.read_ms(); t.read_ms() - start < timeout;)
     {
-        while (serial.available())
+        while (serial.readable())
         {
-            c = serial.read();
+            c = serial.getc();
             if (last == 0xA0 && c == 0xA1 && response == false)
                 response = true;
             if (response && last == 0x83)
@@ -259,11 +253,10 @@ uint8_t GPS::sendPacket(uint8_t *packet, int32_t size, uint32_t timeout)
 void GPS::printPacket(uint8_t *packet, uint32_t size)
 {
     DEBUG("GPS","assembled Packet: {");
-    for (int i = 0; i < size; i++)
+    for (uint32_t i = 0; i < size; i++)
     {
         char hexval[4];
         sprintf(hexval, "0x%02X", packet[i]);
-        DEBUG("GPS",hexval);
         if (i < size - 1) {DEBUG("GPS",", ");}
     }
     DEBUG("GPS","}");

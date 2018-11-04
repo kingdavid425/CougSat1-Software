@@ -27,10 +27,10 @@
 
 // TODO: test the underlying types of enum values, typed enum
 // support in C++11
-typedef enum attributes : uint8_t{
-	RAM_ONLY = 0,
-	RAM_FLASH = 1,
-	TEMP = 2
+typedef enum attributes {
+	RAM_ONLY = 0x00,
+	RAM_FLASH = 0x01,
+	TEMP = 0x02
 }Attributes_t;
 
 class GPS {
@@ -39,16 +39,13 @@ class GPS {
     ~GPS();
  
 	// Accessors
-	bool getMode() const;
 	uint32_t getUtcTime() const;
 	float getLat() const;
 	float getLong() const;
 	int32_t getAltitude() const;
 	uint32_t getSpeedOverGround() const;
 	uint8_t getDate() const;
-	
-	// Mutators
-	void setMode(bool nMode);
+
 	
 	uint8_t read();
 	

@@ -22,7 +22,6 @@
 
 #include "mbed.h"
 #include "SWO.h"
-#include "IHU.h"
 
 //#define NDEBUG
 
@@ -47,7 +46,7 @@ extern Serial umbilical;
  * @param o name of the class or function
  * @param args... standard printf arguments
  */
-#define CONSOLE_TX(o, args...) {umbilical.printf("[%7lu] %10s: ", HAL_GetTick(), o); umbilical.printf(args); umbilical.putc('\n');}
+#define CONSOLE_TX(o, args...) {umbilical.printf("[%7lu] %10s: ", HAL_GetTick(), o); umbilical.printf((char *)args); umbilical.putc('\n');}
 
 /**
  * Clears the console's screen
