@@ -17,6 +17,7 @@
 
 #include <mbed.h>
 #include <rtos.h>
+#include "ADCSPins.h"
 #include "tools/CISError.h"
 
 /**
@@ -24,5 +25,10 @@
  * @return error code
  */
 int main(void) {
-  return ERROR_SUCCESS;
+	DigitalOut reset(GPS_DIGITAL_OUT_PIN);
+	DigitalIn pulse(GPS_DIGITAL_IN_PIN);
+	Serial serial(GPS_SERIAL_TX_PIN, GPS_SERIAL_RX_PIN);
+	
+	
+	return ERROR_SUCCESS;
 }

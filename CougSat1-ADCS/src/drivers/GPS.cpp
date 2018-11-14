@@ -9,61 +9,110 @@
 /**
  * @file GPS.cpp
  * @author Cody Sigvartson
- * @date 22 October 2018
+ * @date 13 November 2018
  * @brief Provides an interface to the on-board GPS 
  *
 */
 
 #include "GPS.h"
+#include <cstring>
 #include "tools/CISConsole.h"
 #include "tools/CISError.h"
 
-// TODO: implement
-GPS::GPS(Serial &serial, DigitalOut &reset, DigitalIn &pulse, bool mode) : serial(serial), reset(reset), pulse(pulse){
+/**
+ * @brief Constructs the GPS object
+ *
+ * @param serial object
+ * @param reset pin (active LOW) leave HIGH, pulse LOW will reset
+ * @param pulse pin precision 1Hz heartbeat from GPS clock
+ */
+GPS::GPS(Serial &serial, DigitalOut &reset, DigitalIn &pulse) : serial(serial), reset(reset), pulse(pulse){
 	this->nmeaState = 0x0; // disable all nmea messages
+	this->reset = reset;
+	this->pulse = pulse;
 }
 
-// TODO: implement
-GPS::~GPS(){
-	// free up any dynamic memory allocation
-}
-
+/**
+ * @brief Accessor for most recent UTC reported by GPS
+ *
+ * @return UTC time as hhmmss
+ */
 uint32_t GPS::getUtcTime() const{
 	return this->utcTime;
 }
 
-float GPS::getLat() const{
-	return this->lat;
+/**
+ * @brief Accessor for most recent latitude reported by GPS
+ *
+ * @param lat_upper degrees
+ * @param lat_lower minutes (10^7 precision)
+ */
+void GPS::getLat(int64_t *lat_upper, int64_t *lat_lower){
+	*lat_upper = this->lat_upper;
+	*lat_lower = this->lat_lower;
 }
 
-float GPS::getLong() const{
-	return this->longitude;
+/**
+ * @brief Accessor for most recent longitude reported by GPS
+ *
+ * @param long_upper degrees
+ * @param long_lower minutes (10^7 precision)
+ */
+void GPS::getLong(int64_t *long_upper, int64_t *long_lower){
+	*long_upper = this->long_upper;
+	*long_lower = this-> long_lower;
 }
 
-int32_t GPS::getAltitude() const{
-	return this->altitude;
-}
-
-uint32_t GPS::getSpeedOverGround() const{
+/**
+ * @brief Accessor for most recent SOG reported by GPS
+ *
+ * @return speed over ground in knots
+ */
+uint16_t GPS::getSpeedOverGround() const{
 	return this->speed;
 }
 
-uint8_t GPS::getDate() const{
+/**
+ * @brief Accessor for date reported by GPS
+ *
+ * @return date ddmmyy
+ */
+uint16_t GPS::getDate() const{
 	return this->date;
 }
 
-// TODO: implement
+/**
+ * @brief Reads one byte of data
+ *
+ * @return error code
+ */
 uint8_t GPS::read(){
-	// Read NMEA data from the GPS using mbed API
-	// ie. serial.read(uint8_t *buffer, int length, const event_callback_t &callback, int event=SERIAL_EVENT_RX_COMPLETE, unsigned char char_match=SERIAL_RESERVED_CHAR_MATCH)
-	// Parse data into usable format for subscribers of this data
+	memset(buf,0,MSG_SIZE);
+	for(uint8_t i = 0; i < MSG_SIZE; i++){
+		if(serial.readable()){
+			buf[i] = serial.getc();
+		}
+		else break;
+	}
 	
-	return ERROR_SUCCESS;
+	uint8_t result = parseRMC(buf);
+	if(result != ERROR_SUCCESS){
+		DEBUG("ADCS", "Error parsing serial data.\n");
+	}
+	
+	return result;
 }
 
-// Attribute:
-// RAM_ONLY = only update RAM
-// RAM_FLASH = update RAM and flash
+/**
+ * @brief set the update rate of the GPS receiver
+ *
+ * @param frequency in Hz
+ * @param attribute:
+ * RAM_ONLY = only update RAM
+ * RAM_FLASH = update RAM and flash
+ *
+ * @return error code
+ */
 uint8_t GPS::setUpdateRate(uint8_t frequency, Attributes_t attribute)
 {
     DEBUG("GPS","Setting update rate\n");
@@ -74,6 +123,13 @@ uint8_t GPS::setUpdateRate(uint8_t frequency, Attributes_t attribute)
     return sendCommand(0x0E, messageBody, 2);
 }
 
+/**
+ * @brief reset the GPS receiver to factory default settings
+ *
+ * @param reboot after reset 
+ *
+ * @return error code
+ */
 uint8_t GPS::resetReceiver(bool reboot)
 {
     DEBUG("GPS","Resetting receiver\n");
@@ -81,33 +137,47 @@ uint8_t GPS::resetReceiver(bool reboot)
     memset(messageBody, 0, 1);
     messageBody[0] = reboot ? 1 : 0;
     uint8_t code = sendCommand(0x04, messageBody, 1, 10000);
-    if (code == ERROR_SUCCESS)
+    if (code != ERROR_SUCCESS)
     {
-        wait_ms(500);
-		// TODO: restart the gps
+		DEBUG("GPS", "Unable to reset receiver\n");
     }
-	else{
-		DEBUG("GPS", "Unable to reset receiver\n")
-	}
+
     return code;
 }
 
-// Attribute:
-// RAM_ONLY = only update RAM
-// RAM_FLASH = update RAM and flash
+/**
+ * @brief configure the NMEA messages sent from the GPS receiver
+ *
+ * @param messageName of NMEA message
+ * @param enable or disable
+ * @param attribute:
+ * RAM_ONLY = only update RAM
+ * RAM_FLASH = update RAM and flash
+ *
+ * @return error code
+ */
 uint8_t GPS::configNMEA(uint8_t messageName, bool enable, Attributes_t attribute)
 {
     DEBUG("GPS","Configuring a NMEA string\n");
-    if (enable)
+    if (enable){
         nmeaState |= 1 << messageName;
-    else
+	}
+    else{
         nmeaState &= ~(1 << messageName);
+	}
     return configNMEA(nmeaState, attribute);
 }
 
-// Attribute:
-// RAM_ONLY = only update RAM
-// RAM_FLASH = update RAM and flash
+/**
+ * @brief configure the NMEA messages sent from the GPS receiver
+ *
+ * @param nmeaByte new state of NMEA message configuration
+ * @param attribute:
+ * RAM_ONLY = only update RAM
+ * RAM_FLASH = update RAM and flash
+ *
+ * @return error code
+ */
 uint8_t GPS::configNMEA(uint8_t nmeaByte, Attributes_t attribute)
 {
     DEBUG("GPS","Configuring all NMEA strings\n");
@@ -115,21 +185,27 @@ uint8_t GPS::configNMEA(uint8_t nmeaByte, Attributes_t attribute)
     uint8_t messageBody[8];
     memset(messageBody, 0, 8);
 	// determine which nmea sentences are enabled/disabled
-	messageBody[0] = (nmeaState >> 0) & 1;
-    messageBody[1] = (nmeaState >> 1) & 1;
-    messageBody[2] = (nmeaState >> 2) & 1;
-    messageBody[3] = (nmeaState >> 3) & 1;
-    messageBody[4] = (nmeaState >> 4) & 1;
-    messageBody[5] = (nmeaState >> 5) & 1;
-    messageBody[6] = (nmeaState >> 6) & 1;
+	messageBody[0] = (nmeaState >> 0) & 1; // GGA
+    messageBody[1] = (nmeaState >> 1) & 1; // GSA
+    messageBody[2] = (nmeaState >> 2) & 1; // GSV
+    messageBody[3] = (nmeaState >> 3) & 1; // GLL
+    messageBody[4] = (nmeaState >> 4) & 1; // RMC
+    messageBody[5] = (nmeaState >> 5) & 1; // VTG
+    messageBody[6] = (nmeaState >> 6) & 1; // ZDA
     messageBody[7] = attribute;
     return sendCommand(0x08, messageBody, 8);
 }
 
-// Attribute:
-// RAM_ONLY = only update RAM
-// RAM_FLASH = update RAM and flash
-// TEMP = temporarily enabled
+/**
+ * @brief configure the GPS power mode
+ *
+ * @param enable or disable power save mode
+ * @param attribute:
+ * RAM_ONLY = only update RAM
+ * RAM_FLASH = update RAM and flash
+ *
+ * @return error code
+ */
 uint8_t GPS::configPowerSave(bool enable, Attributes_t attribute)
 {
     DEBUG("GPS","Configuring Power Save mode\n");
@@ -140,35 +216,137 @@ uint8_t GPS::configPowerSave(bool enable, Attributes_t attribute)
     return sendCommand(0x0C, messageBody, 2);
 }
 
-// TODO: implement
+/**
+ * @brief initialize the GPS to default state
+ *
+ * @return error code
+ */
 uint8_t GPS::initialize(){
-	// This function should initialize the GPS into a "default" state
-	// Use the sendCommand() function to configure the GPS
+	uint8_t result = configNMEA(0x10, true, RAM_FLASH);
+	if(result != ERROR_SUCCESS){
+		DEBUG("ADCS","Error initializing the GPS receiver.\n");
+		return result;
+	}
+	
+	return result;
+}
+
+/////////////////////////// Private Utility Functions ////////////////////////////
+
+/**
+ * @brief parse lat/long degrees from NMEA message into dd.mmmmmmm format (10^7 precision)
+ *
+ * @param field containing lat/long to be parsed
+ * @param upper degrees
+ * @param lower minutes (10^7 precision)
+ *
+ */
+void GPS::parse_degrees(uint8_t *field, int64_t *upper, int64_t *lower){
+	int64_t deg = 0L;
+    while ((*(field + 2) != '.') && (*field >= '0' && *field <= '9')){
+        deg = deg * 10L + *field++ - '0';
+	}
+    *upper = deg;
+
+    int64_t min = (*field++ - '0') * 10;
+    min += *field++ - '0';
+    field++;
+    while ((*field >= '0' && *field <= '9')){
+        min = min * 10L + *field++ - '0';
+	}
+
+    min *= 100L;
+
+    *lower = min / 6;
+}
+
+/**
+ * @brief parse an NMEA RMC message
+ *	Time, date, position, course and speed data provided by a GNSS navigation receiver.
+ *	Structure:
+ *	$GPRMC,hhmmss.sss,A,dddmm.mmmm,a,dddmm.mmmm,a,x.x,x.x,ddmmyy,,,a*hh<CR><LF>
+ *	Example:
+ *	$GPRMC,111636.932,A,2447.0949,N,12100.5223,E,000.0,000.0,030407,,,A*61<CR><LF>
+ *
+ * @param nmea RMC message
+ *
+ * @return error code
+ */
+uint8_t GPS::parseRMC(uint8_t *nmea){
+	char *field = strtok((char*)nmea,",");
+	if(field[0] == '$'){
+		field++;
+		if(strncmp(RMC_ID,field,strlen(RMC_ID)==0)){
+			DEBUG("ADCS","Parsing NMEA RMC data\n");
+		} 
+		else{
+			DEBUG("ADCS","NMEA unidentified or not supported\n");
+			return ERROR_UNKNOWN_COMMAND;
+		}
+	}
+	
+	uint8_t counter = 0;
+	while(counter < NUM_RMC_ATTRIBUTES){
+		field = strtok(NULL,",");
+		parseRMCField((uint8_t *)field,rmcFieldTypes[counter]);
+		counter++;
+	}
+	DEBUG("ADCS","Parsing NMEA data complete\n");
 	return ERROR_SUCCESS;
 }
 
-// Private Utility Functions for parsing NMEA data
-/*
-	Time, date, position, course and speed data provided by a GNSS navigation receiver.
-	Structure:
-	$GPRMC,hhmmss.sss,A,dddmm.mmmm,a,dddmm.mmmm,a,x.x,x.x,ddmmyy,,,a*hh<CR><LF>
-	Example:
-	$GPRMC,111636.932,A,2447.0949,N,12100.5223,E,000.0,000.0,030407,,,A*61<CR><LF>
-*/
-uint8_t GPS::rmcParser(uint8_t *nmea){
-	/*
-	TODO: implement
-	Parse the RMC NMEA sentence and populate:
-	1. UTC time
-	2. latitude
-	3. longitude
-	4. altitude
-	5. speed over ground
-	6. date
-	*/
+/**
+ * @brief parse a specific RMC field from the RMC message
+ *	Time, date, position, course and speed data provided by a GNSS navigation receiver.
+ *	Structure:
+ *	$GPRMC,hhmmss.sss,A,dddmm.mmmm,a,dddmm.mmmm,a,x.x,x.x,ddmmyy,,,a*hh<CR><LF>
+ *	Example:
+ *	$GPRMC,111636.932,A,2447.0949,N,12100.5223,E,000.0,000.0,030407,,,A*61<CR><LF>
+ *
+ * @param field to be parsed
+ * @param type of field being parsed
+ *
+ * @return error code
+ */
+uint8_t GPS::parseRMCField(uint8_t *field, RMCField_t type){
+	switch(type){
+		case TIME:
+			this->utcTime = atoi((char*)field);
+			break;	
+		case LAT:
+			parse_degrees(field, &(this->lat_upper), &(this->lat_lower));
+			break;
+		case LAT_DIR:
+			this->lat_upper = *field == 'S' ? (this->lat_upper)*-1 : this->lat_upper;
+			break;
+		case LONG:
+			parse_degrees(field, &(this->long_upper), &(this->long_lower));
+			break;
+		case LONG_DIR:
+			this->long_upper = *field == 'W' ? (this->long_upper)*-1 : this->long_upper;
+			break;
+		case SOG:
+			this->speed = atoi((char*)field);
+			break;
+		case DATE:
+			this->date = atoi((char*)field);
+			 break;
+		default:
+			return ERROR_UNKNOWN_COMMAND;
+	}
 	return ERROR_SUCCESS;
 }
 
+/**
+ * @brief send command to GPS receiver
+ *
+ * @param messageId of command
+ * @param messageBody of command
+ * @param bodyLen of command
+ * @param timeout
+ *
+ * @return error code
+ */
 uint8_t GPS::sendCommand(uint8_t messageId, uint8_t *messageBody, uint32_t bodyLen, uint32_t timeout)
 {
     DEBUG("GPS","sending command\n");
@@ -212,6 +390,16 @@ uint8_t GPS::sendCommand(uint8_t messageId, uint8_t *messageBody, uint32_t bodyL
     return code;
 }
 
+/**
+ * @brief send command to GPS receiver
+ *
+ * @param messageId of command
+ * @param messageBody of command
+ * @param bodyLen of command
+ * @param timeout
+ *
+ * @return error code
+ */
 uint8_t GPS::sendPacket(uint8_t *packet, uint32_t size, uint32_t timeout)
 {
     uint8_t c = 0;
@@ -250,6 +438,13 @@ uint8_t GPS::sendPacket(uint8_t *packet, uint32_t size, uint32_t timeout)
     return ERROR_WAIT_TIMEOUT;
 }
 
+/**
+ * @brief print out a packet
+ *
+ * @param packet to be printed
+ * @param size of packet to be printed
+ *
+ */
 void GPS::printPacket(uint8_t *packet, uint32_t size)
 {
     DEBUG("GPS","assembled Packet: {");
@@ -257,7 +452,9 @@ void GPS::printPacket(uint8_t *packet, uint32_t size)
     {
         char hexval[4];
         sprintf(hexval, "0x%02X", packet[i]);
-        if (i < size - 1) {DEBUG("GPS",", ");}
+        if (i < size - 1) {
+			DEBUG("GPS",", ");
+		}
     }
     DEBUG("GPS","}");
 }
