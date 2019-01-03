@@ -1,1 +1,12 @@
-/build/
+# Class build output
+/bin/*
+!*.jar
+
+# Backup files
+*.bak
+
+# Settings
+.settings
+
+# Packets
+packets

@@ -1,15 +1,23 @@
 package space.cougs.ground.satellites;
 
-public class CougSat1 extends CougSat {
+/**
+ * CougSat-1 Telemtery and Payload Data
+ */
+public class CougSat1 extends CougSat{
+  private static final long serialVersionUID = 1L;
 
-	public CougSat1() {
+  /**
+   * Constructs a new CougSat-1
+   */
+  public CougSat1() {}
 
-	}
+  @Override
+  public int getID() {
+    return 0x20;
+  }
 
-	@Override
-	public int getID() {
-
-		return 0x20;
-	}
-
+  @Override
+  public String toString() {
+    return "CougSat-1";
+  }
 }
