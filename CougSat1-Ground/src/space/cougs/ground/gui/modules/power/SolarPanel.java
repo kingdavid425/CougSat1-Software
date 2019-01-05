@@ -1,5 +1,6 @@
 package space.cougs.ground.gui.modules.power;
 
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -7,55 +8,63 @@ import java.awt.RenderingHints;
 import javax.swing.JComponent;
 
 import space.cougs.ground.gui.UIScaling;
-import space.cougs.ground.gui.utils.AnimationComponent;
 import space.cougs.ground.gui.utils.CustomColors;
 import space.cougs.ground.gui.utils.Fonts;
 
-public class SolarPanel extends JComponent implements AnimationComponent, UIScaling {
+public class SolarPanel extends JComponent implements UIScaling {
 	private static final long serialVersionUID = 1L;
-	private double current = 0.0;
-	private double voltage = 0.0;
+	private String varName = "";
+	private double varCurrent = 0.0;
+	private double varVoltage = 0.0;
 
-	public SolarPanel(double current, double voltage) {
-		this.setCurrent(current);
-		this.setVoltage(voltage);
-
-		this.setForeground(CustomColors.PRIMARY_TEXT);
+	public SolarPanel(String name) {
+		varName = name;
 	}
 
-	@Override
-	public void updateFrame(double timerDuration) {
-		repaint();
-	}
-
-	protected void paintComponent(Graphics g) {
+	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2d = (Graphics2D) g;
+		FontMetrics fontMetrics = this.getFontMetrics(this.getFont());
 		g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-		g2d.drawString(this.getName() + "", this.getHeight() / 2, this.getWidth() / 2);
-		g2d.drawString(voltage + "V " + current + "I", this.getHeight() / 2, this.getWidth() / 2);
+		g2d.setColor(CustomColors.SECONDARY);
+		g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
+
+		g2d.setColor(CustomColors.PRIMARY_TEXT);
+		g2d.drawString(varName, this.getWidth() / 2 - fontMetrics.stringWidth(varName) / 2, fontMetrics.getAscent());
+
+		String printValues = String.format("%.3f", varVoltage) + "V " + String.format("%.3f", varCurrent) + "A";
+		g2d.drawString(printValues, this.getWidth() / 2 - fontMetrics.stringWidth(printValues) / 2,
+				fontMetrics.getHeight() + fontMetrics.getAscent());
 	}
 
-	public double getVoltage() {
-		return voltage;
+	public String getName() {
+		return varName;
 	}
 
-	public void setVoltage(double voltage) {
-		this.voltage = voltage;
+	public void setName(String name) {
+		this.varName = name;
 	}
 
 	public double getCurrent() {
-		return current;
+		return varCurrent;
 	}
 
 	public void setCurrent(double current) {
-		this.current = current;
+		this.varCurrent = current;
+	}
+
+	public double getVoltage() {
+		return varVoltage;
+	}
+
+	public void setVoltage(double voltage) {
+		this.varVoltage = voltage;
 	}
 
 	@Override
 	public void updateUIScaling(UIScale uiScale) {
-		this.setFont(Fonts.BODY_12);
+		this.setFont(Fonts.BODY_16);
 
 		switch (uiScale) {
 		case SCALE_100:

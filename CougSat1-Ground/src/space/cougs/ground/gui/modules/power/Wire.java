@@ -9,53 +9,69 @@ import space.cougs.ground.gui.utils.AnimationComponent;
 
 public class Wire extends JPanel implements AnimationComponent {
   private static final long serialVersionUID = 1L;
-	private double current = 0.0;
-	private double voltage = 0.0;
-	private String varName = "";
-	private double animationTime = 100;
 
-	public Wire(String name) {
+  private double current       = 0.0;
+  private double voltage       = 0.0;
+  // private double animationTime = 100;
 
-		varName = name;
-	}
+  private int Distance = 0;
 
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		Graphics2D g2d = (Graphics2D) g;
+  private String varName = "";
 
-		for (int i = 0; i < this.getHeight(); i++) {
-			g2d.fillRect(i * 20, 0, 20, this.getHeight() / 2);
-		}
+  public Wire(String name) {
+    varName = name;
+  }
 
-	}
+  public void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    Graphics2D g2d = (Graphics2D)g;
 
-	public String getName() {
-		return varName;
-	}
+	double speed = current/5.0;
+	int length = this.getHeight() * 2;
+  int x = 0;
+  int startDistance = Distance;
 
-	public void setName(String name) {
-		this.varName = name;
-	}
+	// for(int i = 0; x < this.getWidth();i++)
+	// {
+	// 	x = i * (int) speed * (length * 3) + startDistance;
+	// 	g2d.fillRect(x, this.getHeight()/4, length, this.getHeight()/2);
+	// }
 
-	public double getCurrent() {
-		return current;
-	}
+  if (startDistance > length)
+  {
+    startDistance = 0;
+  }
 
-	public void setCurrent(double newCurrent) {
-		this.current = newCurrent;
-	}
+  }
 
-	public double getVoltage() {
-		return voltage;
-	}
+  public String getName() {
+    return varName;
+  }
 
-	public void setVoltage(double newVoltage) {
-		this.voltage = newVoltage;
-	}
+  public void setName(String name) {
+    this.varName = name;
+  }
 
-	@Override
-	public void updateFrame(double timerDuration) {
-		animationTime = timerDuration;
-		repaint();
-	}
+  public double getCurrent() {
+    return current;
+  }
+
+  public void setCurrent(double newCurrent) {
+    this.current = newCurrent;
+  }
+
+  public double getVoltage() {
+    return voltage;
+  }
+
+  public void setVoltage(double newVoltage) {
+    this.voltage = newVoltage;
+  }
+
+  @Override
+  public void updateFrame(double timerDuration) {
+	// animationTime = timerDuration;
+	Distance++;
+    repaint();
+  }
 }

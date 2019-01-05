@@ -16,10 +16,8 @@ public class CISScrollPane extends JScrollPane implements UIScaling {
   public CISScrollPane(Component view) {
     super(view);
     this.setOpaque(false);
-    this.setVerticalScrollBarPolicy(
-        ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-    this.setHorizontalScrollBarPolicy(
-        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    this.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    this.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     this.setBorder(BorderFactory.createLineBorder(CustomColors.PRIMARY.brighter(), 2));
   }
 
@@ -37,8 +35,12 @@ public class CISScrollPane extends JScrollPane implements UIScaling {
   public void updateUIScaling(UIScale uiScale) {
     for (Component child : this.getComponents()) {
       if (child instanceof UIScaling) {
-        ((UIScaling)child).updateUIScaling(uiScale);
+        ((UIScaling) child).updateUIScaling(uiScale);
       }
+    }
+    for (Component child : this.getViewport().getComponents()) {
+      if (child instanceof UIScaling)
+        ((UIScaling) child).updateUIScaling(uiScale);
     }
   }
 }

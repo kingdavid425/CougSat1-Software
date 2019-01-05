@@ -23,21 +23,19 @@ public class CISCheckBox extends JCheckBox implements UIScaling {
 
   private ButtonUI ui = new BasicCheckBoxUI() {
     @Override
-    public synchronized void paint(Graphics g, JComponent component) {
-      AbstractButton button = (AbstractButton)component;
-      ButtonModel    model  = button.getModel();
+    public void paint(Graphics g, JComponent component) {
+      AbstractButton button = (AbstractButton) component;
+      ButtonModel model = button.getModel();
 
-      Graphics2D g2d = (Graphics2D)g;
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-          RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+      Graphics2D g2d = (Graphics2D) g;
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
       Font font = component.getFont();
       g2d.setFont(font);
       FontMetrics fontMetrics = component.getFontMetrics(font);
 
       Insets insets = component.getInsets();
-      int    width  = button.getWidth();
-      int    height = button.getHeight();
+      int height = button.getHeight();
 
       int x = height + insets.left;
       int y = (height - fontMetrics.getHeight()) / 2 + fontMetrics.getAscent();
@@ -49,30 +47,29 @@ public class CISCheckBox extends JCheckBox implements UIScaling {
       y = (height - boxSize) / 2;
       x = (x - boxSize + insets.left) / 2;
 
-      if(model.isPressed()){
+      if (model.isPressed()) {
         g2d.translate(1, 1);
       }
 
       if (model.isEnabled()) {
         g2d.setColor(button.getBackground());
-      }else{        
+      } else {
         g2d.setColor(button.getBackground().darker());
       }
-      if(model.isSelected()){
+      if (model.isSelected()) {
         g2d.fillRect(x, y, boxSize, boxSize);
       }
 
       if (model.isEnabled()) {
         g2d.setColor(button.getForeground());
-      }else{        
+      } else {
         g2d.setColor(button.getForeground().darker());
       }
       g2d.drawRect(x, y, boxSize, boxSize);
-      
-      if(model.isPressed()){
+
+      if (model.isPressed()) {
         g2d.translate(-1, -1);
       }
-
     }
   };
 
@@ -92,25 +89,24 @@ public class CISCheckBox extends JCheckBox implements UIScaling {
   @Override
   public void updateUIScaling(UIScale uiScale) {
     switch (uiScale) {
-      case SCALE_100:
-        this.setFont(Fonts.BODY_16);
-        break;
-      case SCALE_150:
-        this.setFont(Fonts.BODY_24);
-        break;
-      case SCALE_200:
-        this.setFont(Fonts.BODY_32);
-        break;
-      case SCALE_300:
-        this.setFont(Fonts.BODY_48);
-        break;
-      case SCALE_75:
-        this.setFont(Fonts.BODY_12);
-        break;
-      default:
-        System.out.println("Body label \"" + this.getText() +
-                           "\" unknown UI Scale: " + uiScale);
-        break;
+    case SCALE_100:
+      this.setFont(Fonts.BODY_16);
+      break;
+    case SCALE_150:
+      this.setFont(Fonts.BODY_24);
+      break;
+    case SCALE_200:
+      this.setFont(Fonts.BODY_32);
+      break;
+    case SCALE_300:
+      this.setFont(Fonts.BODY_48);
+      break;
+    case SCALE_75:
+      this.setFont(Fonts.BODY_12);
+      break;
+    default:
+      System.out.println("Body label \"" + this.getText() + "\" unknown UI Scale: " + uiScale);
+      break;
     }
   }
 }

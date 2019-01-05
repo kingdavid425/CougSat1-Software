@@ -43,7 +43,7 @@ public final class FileUtils {
 
   public static double readNextEulerAngle(FileInputStream file)
       throws IOException {
-    return Units.rawToEulerAngle(readNextBytes(file, 2));
+    return Units.rawToAngle(readNextBytes(file, 2));
   }
 
   public static double readNextCurrent(FileInputStream file)
@@ -51,8 +51,7 @@ public final class FileUtils {
     return Units.rawToCurrent(readNextBytes(file, 2));
   }
 
-  public static int readNextEnergy(FileInputStream file)
-      throws IOException {
+  public static int readNextEnergy(FileInputStream file) throws IOException {
     return Units.rawToEnergy(readNextBytes(file, 1));
   }
 
@@ -76,7 +75,7 @@ public final class FileUtils {
 
   public static int readNextTemperature(FileInputStream file)
       throws IOException {
-    return Units.rawToTemperature(readNextBytes(file, 1));
+    return Units.rawToTemp(readNextBytes(file, 1));
   }
 
   public static BufferedImage getImage(int size, String name) {
@@ -114,7 +113,6 @@ public final class FileUtils {
     if (thumbnailFile.exists()) {
       return getImage(thumbnailFile);
     } else {
-
       // Get image resize to 150sq px.
       BufferedImage image = getImage(file);
       if (image == null) {
