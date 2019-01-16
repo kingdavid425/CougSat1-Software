@@ -49,7 +49,7 @@ public class EPS extends CISPanel implements UIScaling, SatelliteInfo {
     for (int i = 0; i < 8; i++) {
       solarPanels.add(new SolarPanel("pV" + i));
       pvWires.add(new Wire("pvWire" + i));
-      mppList.add(new Regulator("mppt"));
+      mppList.add(new Regulator("mppt" + i));
     }
     for (int i = 0; i < 2; i++) {
       batts.add(new Battery("Battery" + i));
@@ -100,7 +100,7 @@ public class EPS extends CISPanel implements UIScaling, SatelliteInfo {
       double voltage = 0.0;
       double current = 0.0;
       int y = 0;
-      FontMetrics fontMetrics = powerGeneration.getFontMetrics(powerGeneration.getFont());
+      FontMetrics fontMetrics = powerGeneration.getFontMetrics(solarPanels.get(0).getFont());
 
       for (int i = 0; i < solarPanels.size() / 2; i++) { // left 4 pV
         voltage = solarPanels.get(i).getVoltage();
@@ -172,10 +172,17 @@ public class EPS extends CISPanel implements UIScaling, SatelliteInfo {
   }
 
   public void updateSatellite(CougSat satellite) {
+    int i = 0;
     for (SolarPanel solarPanel : solarPanels) {
-      int i = 0;
+      
       solarPanel.setVoltage(satellite.getEPS().getPVVoltage(i));
       solarPanel.setCurrent(satellite.getEPS().getPVCurrent(i));
+      i++;
+    }
+   i = 0;
+    for (Wire wire : pvWires) {
+      wire.setVoltage(satellite.getEPS().getPVVoltage(i));
+      wire.setCurrent(satellite.getEPS().getPVCurrent(i));
       i++;
     }
     batts.get(0).setVoltage(satellite.getEPS().getBatteryVoltage(0));

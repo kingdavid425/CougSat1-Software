@@ -5,7 +5,7 @@ import java.util.TimeZone;
 
 public final class Units {
   public static double rawToVoltage(long raw) {
-    return raw * 100.0e-6; // 100 µV/LSB
+    return raw * 150.0e-6; // 100 µV/LSB
   }
 
   public static double rawToCurrent(long raw) {
@@ -85,8 +85,6 @@ public final class Units {
       return String.format("0 V");
     for (i = 0; raw * Math.pow(unit, i + 1) < unit; i++)
       ;
-    System.out.println(raw);
-    System.out.println(i);
     char pre = "mµn".charAt(i - 1);
 
     return String.format("%.2f %sV", raw * Math.pow(unit, i), pre);

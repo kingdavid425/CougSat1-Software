@@ -6,15 +6,15 @@ import java.awt.Graphics2D;
 import javax.swing.JPanel;
 
 import space.cougs.ground.gui.utils.AnimationComponent;
+import space.cougs.ground.gui.utils.CustomColors;
 
 public class Wire extends JPanel implements AnimationComponent {
   private static final long serialVersionUID = 1L;
 
-  private double current       = 0.0;
-  private double voltage       = 0.0;
+  private double current = 0.0;
+  private double voltage = 0.0;
   // private double animationTime = 100;
-
-  private int Distance = 0;
+  private int startDistance = 0;
 
   private String varName = "";
 
@@ -24,24 +24,22 @@ public class Wire extends JPanel implements AnimationComponent {
 
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
-    Graphics2D g2d = (Graphics2D)g;
+    Graphics2D g2d = (Graphics2D) g;
 
-	double speed = current/5.0;
-	int length = this.getHeight() * 2;
-  int x = 0;
-  int startDistance = Distance;
+    // double animationSpeed = animationTime / 1000;
+    // double speed = current / 10.0;
+    int length = this.getHeight() * 2;
+    int height = this.getHeight() * 2;
+    int y = this.getHeight() / 4;
 
-	// for(int i = 0; x < this.getWidth();i++)
-	// {
-	// 	x = i * (int) speed * (length * 3) + startDistance;
-	// 	g2d.fillRect(x, this.getHeight()/4, length, this.getHeight()/2);
-	// }
+    for (int i = 0; i * length < this.getWidth(); i++) {
+      g2d.setColor(CustomColors.WIRE_ANIMATION);
+      g2d.fillRect(((startDistance) + i * (length) * 2), y, length, height);
+    }
 
-  if (startDistance > length)
-  {
-    startDistance = 0;
-  }
-
+    if (startDistance > length * 2) {
+      startDistance = 0;
+    }
   }
 
   public String getName() {
@@ -70,8 +68,11 @@ public class Wire extends JPanel implements AnimationComponent {
 
   @Override
   public void updateFrame(double timerDuration) {
-	// animationTime = timerDuration;
-	Distance++;
+
+    int length = this.getHeight() * 2;
+    double speed = this.getCurrent() / 10.0;
+
+    startDistance += length * speed;
     repaint();
   }
 }

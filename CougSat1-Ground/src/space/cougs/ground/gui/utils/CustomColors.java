@@ -22,6 +22,8 @@ public class CustomColors {
 
   public static Color ACCENT = CRIMSON;
 
+  public static Color WIRE_ANIMATION = YELLOW;
+
   public static Color STATUS_GOOD = GREEN;
   public static Color STATUS_WARN = YELLOW;
   public static Color STATUS_BAD  = RED;
