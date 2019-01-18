@@ -40,7 +40,7 @@ public class EPS extends CISPanel implements UIScaling, SatelliteInfo {
   private List<Regulator> mppList = new ArrayList<Regulator>();
   private List<SolarPanel> solarPanels = new ArrayList<SolarPanel>();
   private List<Battery> batts = new ArrayList<Battery>();
-
+  private List<Wire> mainWires = new ArrayList<Wire>();
   Timer timer = new Timer(100, new MyActionListener());
 
   public EPS() {
@@ -48,8 +48,11 @@ public class EPS extends CISPanel implements UIScaling, SatelliteInfo {
 
     for (int i = 0; i < 8; i++) {
       solarPanels.add(new SolarPanel("pV" + i));
-      pvWires.add(new Wire("pvWire" + i));
+      pvWires.add(new Wire("pvWire" + i, i < 4 ? 0 : 1));
       mppList.add(new Regulator("mppt" + i));
+    }
+    for (int i = 0; i < 1; i++) {
+      mainWires.add(new Wire("mainWire" + i, 2));
     }
     for (int i = 0; i < 2; i++) {
       batts.add(new Battery("Battery" + i));
@@ -57,7 +60,9 @@ public class EPS extends CISPanel implements UIScaling, SatelliteInfo {
     for (Wire pvWire : pvWires) {
       movingComponents.add(pvWire);
     }
-
+    for (Wire mainWire : mainWires) {
+      movingComponents.add(mainWire);
+    }
     GridBagConstraintsWrapper gbc = new GridBagConstraintsWrapper();
     gbc.setFill(GridBagConstraintsWrapper.BOTH);
     this.setLayout(new GridBagLayout());
@@ -67,6 +72,10 @@ public class EPS extends CISPanel implements UIScaling, SatelliteInfo {
       powerGeneration.add(solarPanels.get(i));
       powerGeneration.add(pvWires.get(i));
     }
+    for (Wire mainWire : mainWires) {
+      powerGeneration.add(mainWire);
+    }
+
     powerGeneration.setBackground(CustomColors.PRIMARY);
     powerGeneration.setOpaque(true);
     powerGeneration.addComponentListener(generationListener);
@@ -125,6 +134,7 @@ public class EPS extends CISPanel implements UIScaling, SatelliteInfo {
         pvWires.get(i).setBounds(powerGeneration.getWidth() / 2, y + height / 2,
             powerGeneration.getWidth() / 2 - width - 10, 10);
       }
+      mainWires.get(0).setBounds(powerGeneration.getWidth() / 2 - 5, 0, 10, powerGeneration.getHeight() * 3/4);
 
       repaint();
     }
@@ -173,21 +183,27 @@ public class EPS extends CISPanel implements UIScaling, SatelliteInfo {
 
   public void updateSatellite(CougSat satellite) {
     int i = 0;
+    double voltage = 0.0;
+    double current = 0.0;
     for (SolarPanel solarPanel : solarPanels) {
-      
+
       solarPanel.setVoltage(satellite.getEPS().getPVVoltage(i));
       solarPanel.setCurrent(satellite.getEPS().getPVCurrent(i));
+      voltage += satellite.getEPS().getPVVoltage(i);
+      current += satellite.getEPS().getPVCurrent(i);
       i++;
     }
-   i = 0;
+    mainWires.get(0).setVoltage(voltage);
+    mainWires.get(0).setCurrent(current);
+    i = 0;
     for (Wire wire : pvWires) {
       wire.setVoltage(satellite.getEPS().getPVVoltage(i));
       wire.setCurrent(satellite.getEPS().getPVCurrent(i));
       i++;
     }
-    batts.get(0).setVoltage(satellite.getEPS().getBatteryVoltage(0));
-    batts.get(0).setVoltage(satellite.getEPS().getBatteryCurrent(1));
-    batts.get(0).setVoltage(satellite.getEPS().getBatteryVoltage(1));
-    batts.get(0).setVoltage(satellite.getEPS().getBatteryCurrent(1));
+    // batts.get(0).setVoltage(satellite.getEPS().getBatteryVoltage(0));
+    // batts.get(0).setVoltage(satellite.getEPS().getBatteryCurrent(1));
+    // batts.get(0).setVoltage(satellite.getEPS().getBatteryVoltage(1));
+    // batts.get(0).setVoltage(satellite.getEPS().getBatteryCurrent(1));
   }
 }
