@@ -49,16 +49,16 @@ public class PacketHeader {
 
     switch (buf & MASK_COMMAND_ID) {
       case Telemetry.ID:
-        currentPacket = new Telemetry();
+        currentPacket = new Telemetry();//IHU
         break;
       case RadioConfiguration.ID:
         currentPacket = new RadioConfiguration();
         break;
       case Payload1Configuration.ID:
-        currentPacket = new Payload1Configuration();
+        currentPacket = new Payload1Configuration();//camera
         break;
       case Payload2Configuration.ID:
-        currentPacket = new Payload2Configuration();
+        currentPacket = new Payload2Configuration();//plant
         break;
       case Payload3Configuration.ID:
         currentPacket = new Payload3Configuration();
