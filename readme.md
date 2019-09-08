@@ -7,7 +7,7 @@ Each processor (usually each subsystem) has a folder that contains its software.
 * Install the following extensions:
   * [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools)
   * [Clang-Format](https://marketplace.visualstudio.com/items?itemName=xaver.clang-format) - follow instructions to setup clang-format executable location
-  * [Doxygen Documentation Generator](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools)
+  * [Doxygen Documentation Generator](https://marketplace.visualstudio.com/items?itemName=cschlosser.doxdocgen)
   * [PlatformIO IDE](https://marketplace.visualstudio.com/items?itemName=platformio.platformio-ide)
   * [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
 * Copy `.githooks/pre-commit` to `.git/hooks/pre-commit` using `cp .githooks/pre-commit ,git/hooks/pre-commit`
